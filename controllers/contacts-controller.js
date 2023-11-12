@@ -4,7 +4,6 @@ import { ctrlWrapper } from "../decorators/index.js";
 
 import { HttpError } from "../helpers/index.js";
 
-
 const getAll = async (req, res, next) => {
    const result = await contactsService.listContacts();
    res.json(result);
@@ -12,7 +11,6 @@ const getAll = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
    const { contactId: id } = req.params;
-   console.log(req.params);
    const result = await contactsService.getContactById(id);
    if (!result) {
       throw HttpError(404, `Contact with id=${id} is not found`);
