@@ -2,21 +2,23 @@ import express from "express";
 
 import contactsController from "../../controllers/contacts-controller.js";
 
-import { isEmptyBody } from "../../middlewares/index.js";
+import { isEmptyBody, isEmptyFavorite, isValidId } from "../../middlewares/index.js";
 
 import { validateBody } from "../../decorators/index.js";
-import { contactSchema, updContactSchema } from "../../schemas/contacts-schemas.js";
+import { contactAddSchema, updContactSchema, contactFavoriteSchema } from "../../models/contacts.js";
 
 const router = express.Router();
 
 router.get("/", contactsController.getAll);
 
-router.get("/:contactId", contactsController.getById);
+router.get("/:contactId", isValidId, contactsController.getById);
 
-router.post("/", isEmptyBody, validateBody(contactSchema), contactsController.add);
+router.post("/", isEmptyBody, validateBody(contactAddSchema), contactsController.add);
 
-router.delete("/:contactId", contactsController.remove);
+router.delete("/:contactId", isValidId, contactsController.remove);
 
-router.put("/:contactId", isEmptyBody, validateBody(updContactSchema), contactsController.updateById);
+router.put("/:contactId", isValidId, isEmptyBody, validateBody(updContactSchema), contactsController.updateById);
+
+router.patch("/:contactId/favorite", isValidId, isEmptyFavorite, validateBody(contactFavoriteSchema), contactsController.updateContactStatus);
 
 export default router;
