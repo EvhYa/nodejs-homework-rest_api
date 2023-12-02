@@ -1,5 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
+import path from "path";
+import fs from "fs/promises";
+
+import Jimp from "jimp";
 
 import User from "../models/User.js";
 
@@ -9,6 +14,7 @@ import { HttpError } from "../helpers/index.js";
 import Contact from "../models/contacts.js";
 
 const { JWT_SECRET } = process.env;
+const avatarPath = path.resolve("public", "avatars");
 
 const register = async (req, res) => {
    const { email, password } = req.body;
@@ -16,12 +22,16 @@ const register = async (req, res) => {
    if (user) {
       throw HttpError(409, "Email in use");
    }
+
+   const gravatarUrl = gravatar.url(email);
+
    const hashPassword = await bcrypt.hash(password, 10);
-   const newUser = await User.create({ ...req.body, password: hashPassword });
+   const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL: gravatarUrl });
    res.status(201).json({
       user: {
          email: newUser.email,
          subscription: "starter",
+         avatarURL: newUser.avatarURL,
       },
    });
 };
@@ -69,10 +79,30 @@ const subcriptionUpd = async (req, res) => {
    const { _id: id, subscription: currentSub } = req.user;
    const { subscription: newSub } = req.body;
    if (currentSub === newSub) {
-      res.json({message: `Subscription plan ${newSub} is already in use`});
+      res.json({ message: `Subscription plan ${newSub} is already in use` });
    }
    const result = await User.findByIdAndUpdate(id, req.body, { new: true });
    res.json(result);
+};
+
+const avatarUpdate = async (req, res) => {
+   const { _id: id } = req.user;
+
+   const { path: oldPath, filename } = req.file;
+
+   await Jimp.read(oldPath).then((image) => {
+      return image.resize(250, 250).write(`${oldPath}`);
+   });
+
+   const newPath = path.join(avatarPath, filename);
+   await fs.rename(oldPath, newPath);
+
+   const avatar = path.join("avatars", filename);
+   const result = await User.findByIdAndUpdate(id, { avatarURL: avatar }, { new: true });
+
+   res.json({
+      avatarURL: avatar,
+   });
 };
 
 export default {
@@ -81,4 +111,5 @@ export default {
    logout: ctrlWrapper(logout),
    current: ctrlWrapper(current),
    subcriptionUpd: ctrlWrapper(subcriptionUpd),
+   avatarUpdate: ctrlWrapper(avatarUpdate),
 };
