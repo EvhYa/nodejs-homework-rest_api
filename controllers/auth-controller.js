@@ -88,6 +88,10 @@ const subcriptionUpd = async (req, res) => {
 const avatarUpdate = async (req, res) => {
    const { _id: id } = req.user;
 
+   if (!req.file) {
+      throw HttpError(400, "avatar file should be added");
+   }
+
    const { path: oldPath, filename } = req.file;
 
    await Jimp.read(oldPath).then((image) => {
