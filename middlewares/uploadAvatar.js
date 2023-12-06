@@ -1,8 +1,6 @@
 import multer from "multer";
 import path from "path";
 
-import { HttpError } from "../helpers/index.js";
-
 export const destination = path.resolve("tmp");
 
 const storage = multer.diskStorage({
